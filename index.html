@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PM/IT 專案管理平台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="loginView" class="login-shell">
+      <section class="login-panel">
+        <div class="brand-mark">PM</div>
+        <p class="eyebrow">Software Delivery Hub</p>
+        <h1>PM / IT 專案管理平台</h1>
+        <p class="login-copy">集中管理產品開發時程、需求確認、測試修復與跨部門留言討論。</p>
+        <button class="google-button" id="googleLogin" type="button">
+          <span class="google-g">G</span>
+          使用 Google 登入
+        </button>
+        <p class="login-note">登入後會依照角色顯示可操作的功能。</p>
+      </section>
+      <section class="login-preview" aria-label="平台重點畫面預覽">
+        <div class="preview-topbar">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="preview-grid">
+          <div>
+            <strong>12</strong>
+            <span>進行中專案</span>
+          </div>
+          <div>
+            <strong>28</strong>
+            <span>待處理 Todo</span>
+          </div>
+          <div>
+            <strong>6</strong>
+            <span>本週待上線</span>
+          </div>
+        </div>
+        <div class="preview-row active"></div>
+        <div class="preview-row"></div>
+        <div class="preview-row short"></div>
+      </section>
+    </main>
+
+    <div id="appView" class="app-shell is-hidden">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="brand-mark small">PM</div>
+          <div>
+            <strong>PM/IT Hub</strong>
+            <span>後台管理</span>
+          </div>
+        </div>
+        <nav class="nav-list" aria-label="主選單">
+          <div class="nav-group is-open" data-menu-group="project">
+            <button class="nav-item nav-parent is-active" data-parent="project" data-default-page="dashboard" type="button" aria-expanded="true">
+              <span class="nav-icon">▦</span>
+              <span>專案管理</span>
+              <span class="nav-caret">⌄</span>
+            </button>
+            <div class="nav-submenu">
+              <button class="nav-subitem" data-page="projects" data-parent-group="project" type="button">專案列表</button>
+              <button class="nav-subitem" data-page="todos" data-parent-group="project" type="button">Todo / Bug</button>
+            </div>
+          </div>
+          <div class="nav-group" data-menu-group="permission">
+            <button class="nav-item nav-parent" data-parent="permission" data-default-page="products" type="button" aria-expanded="false">
+              <span class="nav-icon">□</span>
+              <span>權限管理</span>
+              <span class="nav-caret">⌄</span>
+            </button>
+            <div class="nav-submenu">
+              <button class="nav-subitem" data-page="products" data-parent-group="permission" type="button">產品管理</button>
+              <button class="nav-subitem" data-page="roles" data-parent-group="permission" type="button">角色管理</button>
+              <button class="nav-subitem" data-page="users" data-parent-group="permission" type="button">使用者管理</button>
+            </div>
+          </div>
+        </nav>
+        <div class="sidebar-footer">
+          <span>目前角色</span>
+          <strong>PM 管理者</strong>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="pageEyebrow">Dashboard</p>
+            <h2 id="pageTitle">專案總覽</h2>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" id="noticeButton" type="button" title="通知">◔</button>
+            <div class="user-chip">
+              <span>SL</span>
+              <div>
+                <strong>Sophie Lu</strong>
+                <small>PM Lead</small>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="content">
+          <section class="page is-active" data-page-panel="dashboard">
+            <div class="summary-grid">
+              <article class="metric-card">
+                <span>進行中專案</span>
+                <strong id="dashboardActiveProjects">0</strong>
+                <small>開發中與測試中</small>
+              </article>
+              <article class="metric-card">
+                <span>待確認需求</span>
+                <strong id="dashboardConfirmProjects">0</strong>
+                <small>等待 PM / IT 補充</small>
+              </article>
+              <article class="metric-card">
+                <span>未關閉 Bug</span>
+                <strong id="dashboardOpenBugs">0</strong>
+                <small id="dashboardHighBugs">高優先級 0 件</small>
+              </article>
+              <article class="metric-card">
+                <span>本月上線</span>
+                <strong id="dashboardLaunchProjects">0</strong>
+                <small>待上線與已上線</small>
+              </article>
+            </div>
+            <div class="dashboard-grid">
+              <article class="info-panel">
+                <h4>專案狀態分布</h4>
+                <div class="dashboard-list" id="dashboardStatusList"></div>
+              </article>
+              <article class="info-panel">
+                <h4>近期需注意</h4>
+                <div class="dashboard-list" id="dashboardAttentionList"></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="page page-projects" data-page-panel="projects">
+            <div class="toolbar project-filter-toolbar">
+              <div class="search-field">
+                <span>⌕</span>
+                <input id="projectSearch" type="search" placeholder="搜尋專案、產品或負責人" />
+              </div>
+              <select id="productFilter" aria-label="產品篩選">
+                <option value="all">全部產品</option>
+              </select>
+              <select id="pmFilter" aria-label="PM 篩選">
+                <option value="all">全部 PM</option>
+              </select>
+              <select id="itFilter" aria-label="IT 篩選">
+                <option value="all">全部 IT</option>
+              </select>
+              <select id="statusFilter" aria-label="專案狀態篩選">
+                <option value="all">全部狀態</option>
+                <option value="開發中">開發中</option>
+                <option value="測試中">測試中</option>
+                <option value="待上線">待上線</option>
+                <option value="需求確認中">需求確認中</option>
+              </select>
+              <button class="primary-button" id="newProjectButton" type="button">＋ 新增專案</button>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>版號</th>
+                    <th>類型</th>
+                    <th>產品</th>
+                    <th>PM</th>
+                    <th>IT</th>
+                    <th>狀態</th>
+                    <th>開發完成</th>
+                    <th>上線日</th>
+                    <th>Todo</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="projectRows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="page page-detail" data-page-panel="detail">
+            <button class="ghost-button back-button" id="backToProjects" type="button">‹ 回專案列表</button>
+            <div class="detail-hero">
+              <div>
+                <p class="eyebrow" id="detailProduct">App 產品線</p>
+                <h3 id="detailTitle">會員中心改版</h3>
+                <p id="detailSummary">調整會員資料、綁定手機與通知設定流程。</p>
+              </div>
+              <div class="status-stack">
+                <span id="detailStatus" class="status status-build">開發中</span>
+                <button class="primary-button" id="quickBugButton" type="button">＋ 新增 Todo / Bug</button>
+              </div>
+            </div>
+            <div class="timeline-strip">
+              <div><span>需求確認</span><strong id="dateReq">05/06</strong></div>
+              <div><span>開發開始</span><strong id="dateStart">05/10</strong></div>
+              <div><span>開發完成</span><strong id="dateDev">05/28</strong></div>
+              <div><span>測試開始</span><strong id="dateTest">05/29</strong></div>
+              <div><span>預計上線</span><strong id="dateLaunch">06/05</strong></div>
+            </div>
+            <div class="tabs" role="tablist">
+              <button class="tab is-active" data-tab="overview" type="button">總覽</button>
+              <button class="tab" data-tab="requirement" type="button">開發需求</button>
+              <button class="tab" data-tab="bugs" type="button">Todo / Bug</button>
+              <button class="tab" data-tab="comments" type="button">留言紀錄</button>
+              <button class="tab" data-tab="history" type="button">異動紀錄</button>
+            </div>
+            <div class="tab-panel is-active" data-tab-panel="overview">
+              <div class="detail-grid">
+                <article class="info-panel">
+                  <h4>專案資訊</h4>
+                  <dl>
+                    <dt>PM 負責人</dt><dd id="detailPm">Sophie Lu</dd>
+                    <dt>IT 負責人</dt><dd id="detailIt">Kai Chen</dd>
+                    <dt>優先級</dt><dd id="detailPriority">高</dd>
+                    <dt>目前待辦</dt><dd id="detailBugCount">4 件</dd>
+                  </dl>
+                  <h4 class="subsection-title">請假期間</h4>
+                  <div class="dashboard-list" id="detailLeavePeriods"></div>
+                  <h4 class="subsection-title">版本更新內容</h4>
+                  <div id="detailVersionHtml" class="requirement-html muted">未填寫版本更新內容</div>
+                </article>
+                <article class="info-panel">
+                  <h4>近期留言</h4>
+                  <div class="comment-list compact" id="overviewComments"></div>
+                </article>
+              </div>
+            </div>
+            <div class="tab-panel" data-tab-panel="requirement">
+              <article class="requirement-panel">
+                <h4>需求背景</h4>
+                <div id="requirementBackground" class="requirement-html"></div>
+                <h4>功能需求</h4>
+                <ul id="requirementList"></ul>
+                <h4>驗收條件</h4>
+                <ul id="acceptanceList"></ul>
+              </article>
+            </div>
+            <div class="tab-panel" data-tab-panel="bugs">
+              <div class="bug-board" id="bugBoard"></div>
+            </div>
+            <div class="tab-panel" data-tab-panel="comments">
+              <div class="comment-composer">
+                <textarea id="newCommentText" placeholder="輸入留言，補充需求或詢問開發細節"></textarea>
+                <button class="primary-button" id="addCommentButton" type="button">送出留言</button>
+              </div>
+              <div class="comment-list" id="commentList"></div>
+            </div>
+            <div class="tab-panel" data-tab-panel="history">
+              <div class="history-list" id="historyList"></div>
+            </div>
+          </section>
+
+          <section class="page page-project-form" data-page-panel="projectForm">
+            <button class="ghost-button back-button" id="backFromProjectForm" type="button">‹ 回專案列表</button>
+            <form id="projectForm" class="page-form">
+              <input type="hidden" name="id" />
+              <div class="tabs project-edit-tabs is-hidden" id="projectEditTabs" role="tablist">
+                <button class="tab is-active" data-project-edit-tab="overview" type="button">總覽</button>
+                <button class="tab" data-project-edit-tab="items" type="button">項目</button>
+              </div>
+
+              <div class="project-edit-panel is-active" data-project-edit-panel="overview">
+              <div class="form-section">
+                <div class="section-heading">
+                  <p class="eyebrow">Project Profile</p>
+                  <h3 id="projectFormTitle">新增專案</h3>
+                </div>
+                <div class="form-grid">
+                  <label>版號<input name="version" required placeholder="例：v1.4.0" /></label>
+                  <label>類型<select name="projectType" required><option>Android</option><option>iOS</option><option>平台</option><option>模組</option></select></label>
+                  <label>產品<select name="product" id="projectProductSelect" required></select></label>
+                  <label>PM<select name="pm" id="projectPmSelect" multiple required></select></label>
+                  <label>IT<select name="it" id="projectItSelect" multiple required></select></label>
+                  <label>專案狀態<select name="status"><option>需求確認中</option><option>開發中</option><option>測試中</option><option>待上線</option><option>已上線</option><option>暫停</option></select></label>
+                  <label>優先級<select name="priority"><option>高</option><option>中</option><option>低</option></select></label>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="section-heading">
+                  <p class="eyebrow">Schedule</p>
+                  <h3>時程設定</h3>
+                </div>
+                <div class="form-grid date-grid">
+                  <label>開始開發日<input name="devStart" type="date" /></label>
+                  <label>開發工時<input name="devEffort" type="number" min="0" step="0.5" placeholder="單位：日" /></label>
+                  <label>內測開始日<input name="internalTestStart" type="date" /></label>
+                  <label>內測工時<input name="internalTestEffort" type="number" min="0" step="0.5" placeholder="單位：日" /></label>
+                  <label>公測開始日<input name="publicTestStart" type="date" /></label>
+                  <label>公測工時<input name="publicTestEffort" type="number" min="0" step="0.5" placeholder="單位：日" /></label>
+                  <label>預計完成日<input name="expectedDone" type="date" /></label>
+                  <label>上線日<input name="launch" type="date" /></label>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="section-heading">
+                  <p class="eyebrow">Release Notes</p>
+                  <h3>版本更新內容</h3>
+                </div>
+                <div class="editor-ai-layout">
+                  <div class="editor-column">
+                    <div class="editor-toolbar" data-editor-toolbar="versionEditor" aria-label="版本更新內容編輯工具列">
+                      <button type="button" data-markdown-action="heading">H2</button>
+                      <button type="button" data-markdown-action="bold">B</button>
+                      <button type="button" data-markdown-action="italic">I</button>
+                      <button type="button" data-markdown-action="list">•</button>
+                      <button type="button" data-markdown-action="quote">引用</button>
+                      <button type="button" data-markdown-action="code">Code</button>
+                      <button type="button" data-editor-action="link">連結</button>
+                      <button type="button" data-editor-action="image">圖片</button>
+                      <button type="button" data-editor-action="video">影音</button>
+                      <button type="button" data-editor-action="attachment">附件</button>
+                    </div>
+                    <textarea id="versionEditor" class="markdown-editor" aria-label="版本更新內容 Markdown 編輯器" placeholder="請用 Markdown 輸入版本更新內容，例如：&#10;&#10;## 新增功能&#10;- 支援會員資料編輯&#10;- 調整通知設定流程"></textarea>
+                    <div class="markdown-preview">
+                      <strong>預覽</strong>
+                      <div id="versionPreview" class="markdown-preview-body muted">Markdown 預覽會顯示在這裡。</div>
+                    </div>
+                    <div class="attachment-panel">
+                      <strong>附件</strong>
+                      <ul id="versionAttachmentList"></ul>
+                    </div>
+                  </div>
+                  <div class="ai-panel" data-ai-panel="versionEditor">
+                    <div class="ai-panel-header">
+                      <div>
+                        <p class="eyebrow">AI Assistant</p>
+                        <h4>AI 協助版本更新內容</h4>
+                      </div>
+                      <select data-ai-model aria-label="選擇語言模型">
+                        <option value="高準確模型">高準確模型</option>
+                        <option value="快速模型">快速模型</option>
+                        <option value="輕量模型">輕量模型</option>
+                      </select>
+                    </div>
+                    <textarea data-ai-prompt placeholder="輸入想請 AI 協助的內容，例如：請幫我優化語氣、找出遺漏項目、改成給客戶看的版本更新說明。"></textarea>
+                    <div class="ai-actions">
+                      <button class="ghost-button" type="button" data-ai-template="優化">優化內容</button>
+                      <button class="ghost-button" type="button" data-ai-template="偵錯">偵錯檢查</button>
+                      <button class="ghost-button" type="button" data-ai-template="補充">補充內容</button>
+                      <button class="primary-button" type="button" data-ai-submit>送出給 AI</button>
+                    </div>
+                    <div class="ai-response" data-ai-response>AI 回覆會顯示在這裡。</div>
+                    <div class="ai-actions right">
+                      <button class="ghost-button" type="button" data-ai-insert="append">加入 editor</button>
+                      <button class="ghost-button" type="button" data-ai-insert="replace">取代 editor</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <input class="is-hidden" id="sharedImageInput" type="file" accept="image/*" multiple />
+              <input class="is-hidden" id="sharedVideoInput" type="file" accept="video/*" multiple />
+              <input class="is-hidden" id="sharedAttachmentInput" type="file" multiple />
+              </div>
+
+              <div class="project-edit-panel" data-project-edit-panel="items">
+                <div class="form-section">
+                  <div class="section-heading split-heading">
+                    <div>
+                      <p class="eyebrow">Work Items</p>
+                      <h3>項目列表</h3>
+                    </div>
+                    <button class="primary-button" id="newProjectItemButton" type="button">＋ 新增項目</button>
+                  </div>
+                  <div class="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>項目名稱</th>
+                          <th>IT</th>
+                          <th>優先級</th>
+                          <th>進度</th>
+                          <th>刪除</th>
+                        </tr>
+                      </thead>
+                      <tbody id="projectItemRows"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div class="page-form-actions">
+                <span id="projectFormModeNote" class="form-mode-note">可編輯</span>
+                <button class="ghost-button" id="cancelProjectForm" type="button">取消</button>
+                <button class="primary-button" type="submit">儲存專案</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="page page-item-form" data-page-panel="itemForm">
+            <button class="ghost-button back-button" id="backFromItemForm" type="button">‹ 回項目列表</button>
+            <form id="projectItemForm" class="page-form">
+              <input type="hidden" name="id" />
+              <input type="hidden" name="projectId" />
+              <div class="form-section">
+                <div class="section-heading">
+                  <p class="eyebrow">Item Profile</p>
+                  <h3 id="projectItemFormTitle">新增項目</h3>
+                </div>
+                <div class="form-grid">
+                  <label>項目名稱<input name="name" required placeholder="例：會員資料維護流程" /></label>
+                  <label>IT<select name="it" id="projectItemItSelect" multiple required></select></label>
+                  <label>優先級<select name="priority"><option>高</option><option>中</option><option>低</option></select></label>
+                  <label>進度<select name="progress"><option>待處理</option><option>開發中</option><option>測試中</option><option>已修復</option><option>已完成</option></select></label>
+                </div>
+              </div>
+              <div class="item-workspace-layout">
+                <div class="form-section item-requirement-section">
+                  <div class="section-heading">
+                    <p class="eyebrow">PM Requirement</p>
+                    <h3>需求內容</h3>
+                  </div>
+                  <label class="full-label">PM 需求內容
+                    <textarea id="itemRequirementEditor" name="requirementMarkdown" class="is-hidden" aria-label="PM 需求內容 Markdown 原始碼"></textarea>
+                    <div id="itemRequirementVisualEditor" class="visual-markdown-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="輸入 Markdown，例如：# 需求項目 #"></div>
+                  </label>
+                  <div class="markdown-preview">
+                    <strong>Markdown 原始碼</strong>
+                    <div id="itemRequirementPreview" class="markdown-preview-body muted">Markdown 預覽會顯示在這裡。</div>
+                  </div>
+                </div>
+                <div class="form-section item-message-section">
+                  <div class="ai-panel item-ai-panel" id="itemRequirementAiPanel" data-ai-panel="itemRequirementEditor">
+                    <div class="ai-panel-header">
+                      <div>
+                        <p class="eyebrow">AI Assistant</p>
+                        <h4>AI 協助需求內容</h4>
+                      </div>
+                      <select data-ai-model aria-label="選擇語言模型">
+                        <option value="高準確模型">高準確模型</option>
+                        <option value="快速模型">快速模型</option>
+                        <option value="輕量模型">輕量模型</option>
+                      </select>
+                    </div>
+                    <textarea data-ai-prompt placeholder="輸入想請 AI 協助的內容，例如：請幫我整理規格、補上驗收條件、找出需求矛盾或遺漏情境。"></textarea>
+                    <div class="ai-actions">
+                      <button class="ghost-button" type="button" data-ai-template="優化">優化內容</button>
+                      <button class="ghost-button" type="button" data-ai-template="偵錯">偵錯檢查</button>
+                      <button class="ghost-button" type="button" data-ai-template="補充">補充內容</button>
+                      <button class="primary-button" type="button" data-ai-submit>送出給 AI</button>
+                    </div>
+                    <div class="ai-response" data-ai-response>AI 回覆會顯示在這裡。</div>
+                    <div class="ai-actions right">
+                      <button class="ghost-button" type="button" data-ai-insert="append">加入內容</button>
+                      <button class="ghost-button" type="button" data-ai-insert="replace">取代內容</button>
+                    </div>
+                  </div>
+                  <div class="section-heading">
+                    <p class="eyebrow">Discussion</p>
+                    <h3>項目訊息</h3>
+                  </div>
+                  <div class="item-message-list" id="itemMessageList"></div>
+                  <div class="item-message-composer">
+                    <textarea id="itemMessageInput" placeholder="輸入訊息，針對此項目補充說明、提出問題或回覆。"></textarea>
+                    <button class="primary-button" id="addItemMessageButton" type="button">送出訊息</button>
+                  </div>
+                </div>
+              </div>
+              <div class="page-form-actions">
+                <button class="ghost-button" id="cancelProjectItemForm" type="button">取消</button>
+                <button class="primary-button" type="submit">儲存項目</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="page" data-page-panel="todos">
+            <div class="toolbar">
+              <div class="search-field">
+                <span>⌕</span>
+                <input id="todoSearch" type="search" placeholder="搜尋 Bug 標題或專案" />
+              </div>
+              <button class="primary-button" id="newTodoButton" type="button">＋ 新增 Todo / Bug</button>
+            </div>
+            <div class="kanban" id="todoKanban"></div>
+          </section>
+
+          <section class="page" data-page-panel="products">
+            <div class="toolbar right">
+              <button class="primary-button" id="newProductButton" type="button">＋ 新增產品</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>產品名稱</th>
+                    <th>說明</th>
+                    <th>啟用狀態</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="productRows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="page" data-page-panel="roles">
+            <div class="toolbar right">
+              <button class="primary-button" id="newRoleButton" type="button">＋ 新增角色</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>角色名稱</th>
+                    <th>啟用狀態</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="roleRows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="page" data-page-panel="permissions">
+            <div class="permission-layout">
+              <aside class="role-selector">
+                <button class="is-active" type="button">PM 管理者</button>
+                <button type="button">PM</button>
+                <button type="button">IT 管理者</button>
+                <button type="button">IT</button>
+                <button type="button">檢視者</button>
+              </aside>
+              <div class="table-wrap">
+                <table class="permission-table">
+                  <thead>
+                    <tr>
+                      <th>功能模組</th>
+                      <th>查看</th>
+                      <th>新增</th>
+                      <th>編輯</th>
+                      <th>刪除</th>
+                      <th>狀態更新</th>
+                    </tr>
+                  </thead>
+                  <tbody id="permissionRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" data-page-panel="users">
+            <div class="toolbar right">
+              <button class="primary-button" id="newUserButton" type="button">＋ 新增使用者</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>使用者</th>
+                    <th>Email</th>
+                    <th>角色</th>
+                    <th>負責產品</th>
+                    <th>啟用狀態</th>
+                  </tr>
+                </thead>
+                <tbody id="userRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop is-hidden" id="bugModal" role="dialog" aria-modal="true" aria-labelledby="bugModalTitle">
+      <form class="modal-card" id="bugForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">測試修復項目</p>
+            <h3 id="bugModalTitle">新增 Todo / Bug</h3>
+          </div>
+          <button class="icon-button close-modal" type="button" aria-label="關閉">×</button>
+        </div>
+        <div class="form-grid">
+          <label>所屬專案<select name="project" id="bugProjectSelect"></select></label>
+          <label>類型<select name="type"><option>Bug</option><option>調整</option><option>補充需求</option><option>測試問題</option></select></label>
+          <label>標題<input name="title" required placeholder="例：手機驗證碼重送後倒數未重置" /></label>
+          <label>指派給<input name="assignee" required placeholder="例：Kai Chen" /></label>
+          <label>狀態<select name="status"><option>待處理</option><option>處理中</option><option>已修復</option><option>待 PM 確認</option><option>已關閉</option></select></label>
+          <label>優先級<select name="priority"><option>高</option><option>中</option><option>低</option></select></label>
+        </div>
+        <label class="full-label">問題內容<textarea name="description" required placeholder="描述發生步驟、預期結果與實際結果"></textarea></label>
+        <div class="modal-actions">
+          <button class="ghost-button close-modal" type="button">取消</button>
+          <button class="primary-button" type="submit">新增項目</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-backdrop is-hidden" id="productModal" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+      <form class="modal-card" id="productForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">產品設定</p>
+            <h3 id="productModalTitle">新增產品</h3>
+          </div>
+          <button class="icon-button close-modal" type="button" aria-label="關閉">×</button>
+        </div>
+        <input type="hidden" name="id" />
+        <div class="switch-row">
+          <span>啟用狀態</span>
+          <label class="switch">
+            <input name="enabled" type="checkbox" checked />
+            <span></span>
+          </label>
+        </div>
+        <div class="form-grid single">
+          <label>產品名稱<input name="name" required placeholder="例：App 產品線" /></label>
+          <label>說明<textarea name="description" placeholder="輸入產品用途或管理範圍"></textarea></label>
+          <label>備註<textarea name="note" placeholder="補充內部注意事項"></textarea></label>
+        </div>
+        <div class="modal-actions">
+          <button class="ghost-button close-modal" type="button">取消</button>
+          <button class="primary-button" type="submit">儲存產品</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-backdrop is-hidden" id="roleModal" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle">
+      <form class="modal-card" id="roleForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">角色設定</p>
+            <h3 id="roleModalTitle">新增角色</h3>
+          </div>
+          <button class="icon-button close-modal" type="button" aria-label="關閉">×</button>
+        </div>
+        <input type="hidden" name="id" />
+        <div class="switch-row">
+          <span>啟用狀態</span>
+          <label class="switch">
+            <input name="enabled" type="checkbox" checked />
+            <span></span>
+          </label>
+        </div>
+        <div class="form-grid single">
+          <label>角色名稱<input name="name" required placeholder="例：PM 管理者" /></label>
+          <label>說明<textarea name="description" placeholder="描述角色可負責的工作"></textarea></label>
+        </div>
+        <fieldset class="permission-fieldset">
+          <legend>角色功能權限</legend>
+          <label><input type="checkbox" name="permissions" value="專案查看" checked /> 專案查看</label>
+          <label><input type="checkbox" name="permissions" value="專案新增編輯" checked /> 專案新增 / 編輯</label>
+          <label><input type="checkbox" name="permissions" value="Todo Bug 管理" checked /> Todo / Bug 管理</label>
+          <label><input type="checkbox" name="permissions" value="產品管理" /> 產品管理</label>
+          <label><input type="checkbox" name="permissions" value="角色管理" /> 角色管理</label>
+          <label><input type="checkbox" name="permissions" value="使用者管理" /> 使用者管理</label>
+        </fieldset>
+        <label class="full-label">備註<textarea name="note" placeholder="補充內部注意事項"></textarea></label>
+        <div class="modal-actions">
+          <button class="ghost-button close-modal" type="button">取消</button>
+          <button class="primary-button" type="submit">儲存角色</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-backdrop is-hidden" id="userModal" role="dialog" aria-modal="true" aria-labelledby="userModalTitle">
+      <form class="modal-card" id="userForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">使用者設定</p>
+            <h3 id="userModalTitle">新增使用者</h3>
+          </div>
+          <button class="icon-button close-modal" type="button" aria-label="關閉">×</button>
+        </div>
+        <input type="hidden" name="id" />
+        <div class="switch-row">
+          <span>狀態</span>
+          <label class="switch">
+            <input name="enabled" type="checkbox" checked />
+            <span></span>
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>使用者名稱<input name="name" required placeholder="例：Sophie Lu" /></label>
+          <label>使用者 Email<input name="email" type="email" required placeholder="例：sophie@example.com" /></label>
+          <label>角色<select name="role" id="userRoleSelect" required></select></label>
+          <label>負責產品<select name="products" id="userProductSelect" multiple required></select></label>
+        </div>
+        <div class="modal-actions">
+          <button class="ghost-button close-modal" type="button">取消</button>
+          <button class="primary-button" type="submit">儲存使用者</button>
+        </div>
+      </form>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
