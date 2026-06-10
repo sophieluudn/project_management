@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PM/IT 專案管理平台</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260610-menu-rwd" />
   </head>
   <body>
     <main id="loginView" class="login-shell">
@@ -46,7 +46,7 @@
     </main>
 
     <div id="appView" class="app-shell is-hidden">
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebarNav">
         <div class="sidebar-brand">
           <div class="brand-mark small">PM</div>
           <div>
@@ -84,10 +84,16 @@
           <strong>PM 管理者</strong>
         </div>
       </aside>
+      <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
       <section class="workspace">
         <header class="topbar">
-          <div>
+          <button class="icon-button mobile-menu-button" id="mobileMenuButton" type="button" aria-controls="sidebarNav" aria-expanded="false" title="開啟選單">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <div class="topbar-title">
             <p class="eyebrow" id="pageEyebrow">Dashboard</p>
             <h2 id="pageTitle">專案總覽</h2>
           </div>
@@ -168,9 +174,9 @@
               <table>
                 <thead>
                   <tr>
-                    <th>版號</th>
-                    <th>類型</th>
                     <th>產品</th>
+                    <th>類型</th>
+                    <th>版號</th>
                     <th>PM</th>
                     <th>IT</th>
                     <th>狀態</th>
@@ -496,7 +502,6 @@
                     <th>產品名稱</th>
                     <th>說明</th>
                     <th>啟用狀態</th>
-                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody id="productRows"></tbody>
@@ -515,7 +520,6 @@
                     <th>ID</th>
                     <th>角色名稱</th>
                     <th>啟用狀態</th>
-                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody id="roleRows"></tbody>

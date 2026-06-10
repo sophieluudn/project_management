@@ -227,9 +227,9 @@ function renderProjects() {
       const count = bugs.filter((bug) => bug.projectId === project.id && bug.status !== "已關閉").length;
       return `
         <tr>
-          <td class="project-name"><button class="link-button" data-open-overview="${project.id}" type="button">${projectVersion(project)}</button><span>${project.summary}</span></td>
-          <td>${project.projectType || "平台"}</td>
           <td>${project.product}</td>
+          <td>${project.projectType || "平台"}</td>
+          <td><button class="link-button" data-open-overview="${project.id}" type="button">${projectVersion(project)}</button></td>
           <td>${project.pm}</td>
           <td>${project.it}</td>
           <td><span class="status ${statusClass(project.status)}">${project.status}</span></td>
@@ -525,11 +525,6 @@ function renderProducts() {
           <span></span>
         </label>
       </td>
-      <td>
-        <div class="row-actions">
-          <button class="danger-button" data-delete-product="${product.id}" type="button">刪除</button>
-        </div>
-      </td>
     </tr>
   `).join("");
 }
@@ -544,11 +539,6 @@ function renderRoles() {
           <input data-toggle-role="${role.id}" type="checkbox" ${role.enabled ? "checked" : ""} />
           <span></span>
         </label>
-      </td>
-      <td>
-        <div class="row-actions">
-          <button class="danger-button" data-delete-role="${role.id}" type="button">刪除</button>
-        </div>
       </td>
     </tr>
   `).join("");
@@ -644,6 +634,11 @@ function openModal(id) {
 
 function closeModals() {
   $$(".modal-backdrop").forEach((modal) => modal.classList.add("is-hidden"));
+}
+
+function setMobileMenu(open) {
+  $("#appView").classList.toggle("menu-open", open);
+  $("#mobileMenuButton").setAttribute("aria-expanded", open ? "true" : "false");
 }
 
 function seedNewProject(form) {
@@ -1103,11 +1098,29 @@ $(".nav-list").addEventListener("click", (event) => {
     if (shouldOpen || !parentButton.classList.contains("is-active")) {
       switchPage(parentButton.dataset.defaultPage);
     }
+    if (window.matchMedia("(max-width: 680px)").matches) {
+      setMobileMenu(false);
+    }
     return;
   }
   const button = event.target.closest("[data-page]");
   if (!button) return;
   switchPage(button.dataset.page);
+  if (window.matchMedia("(max-width: 680px)").matches) {
+    setMobileMenu(false);
+  }
+});
+
+$("#mobileMenuButton").addEventListener("click", () => {
+  setMobileMenu(!$("#appView").classList.contains("menu-open"));
+});
+
+$("#sidebarBackdrop").addEventListener("click", () => setMobileMenu(false));
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    setMobileMenu(false);
+  }
 });
 
 $("#projectRows").addEventListener("click", (event) => {
@@ -1355,26 +1368,15 @@ document.body.addEventListener("change", (event) => {
 
 $("#productRows").addEventListener("click", (event) => {
   const editButton = event.target.closest("[data-edit-product]");
-  const deleteButton = event.target.closest("[data-delete-product]");
   if (editButton) {
     openProductModal(editButton.dataset.editProduct);
-  }
-  if (deleteButton) {
-    products = products.filter((product) => product.id !== Number(deleteButton.dataset.deleteProduct));
-    renderProducts();
-    renderProjectFilters();
   }
 });
 
 $("#roleRows").addEventListener("click", (event) => {
   const editButton = event.target.closest("[data-edit-role]");
-  const deleteButton = event.target.closest("[data-delete-role]");
   if (editButton) {
     openRoleModal(editButton.dataset.editRole);
-  }
-  if (deleteButton) {
-    roles = roles.filter((role) => role.id !== Number(deleteButton.dataset.deleteRole));
-    renderRoles();
   }
 });
 
