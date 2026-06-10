@@ -173,6 +173,88 @@ function setSelectedValues(select, values) {
   Array.from(select.options).forEach((option) => {
     option.selected = nextValues.includes(option.value);
   });
+  syncMultiSelect(select);
+}
+
+function syncMultiSelect(select) {
+  const widget = select?.nextElementSibling?.classList?.contains("multi-select") ? select.nextElementSibling : null;
+  if (!widget) return;
+  const selectedOptions = Array.from(select.selectedOptions);
+  const tags = widget.querySelector(".multi-select-tags");
+  const dropdown = widget.querySelector(".multi-select-dropdown");
+  const placeholder = select.getAttribute("placeholder") || "請選擇";
+  widget.classList.toggle("is-disabled", select.disabled);
+  tags.innerHTML = selectedOptions.length
+    ? selectedOptions.map((option) => `
+        <span class="multi-select-tag" data-value="${escapeHtml(option.value)}">
+          <span>${escapeHtml(option.textContent)}</span>
+          <button type="button" aria-label="移除 ${escapeHtml(option.textContent)}">×</button>
+        </span>
+      `).join("")
+    : `<span class="multi-select-placeholder">${placeholder}</span>`;
+  dropdown.innerHTML = Array.from(select.options).map((option) => `
+    <div class="multi-select-option ${option.selected ? "is-selected" : ""}" data-value="${escapeHtml(option.value)}" role="option" aria-selected="${option.selected}">
+      ${escapeHtml(option.textContent)}
+    </div>
+  `).join("");
+}
+
+function enhanceMultiSelect(select) {
+  if (!select || select.dataset.enhancedSelect === "true") {
+    syncMultiSelect(select);
+    return;
+  }
+  select.dataset.enhancedSelect = "true";
+  select.classList.add("native-multi-select");
+  const widget = document.createElement("div");
+  widget.className = "multi-select";
+  widget.innerHTML = `
+    <button class="multi-select-control" type="button" aria-haspopup="listbox" aria-expanded="false">
+      <span class="multi-select-tags"></span>
+      <span class="multi-select-arrow">⌄</span>
+    </button>
+    <div class="multi-select-dropdown" role="listbox" aria-multiselectable="true"></div>
+  `;
+  select.insertAdjacentElement("afterend", widget);
+
+  widget.querySelector(".multi-select-control").addEventListener("click", () => {
+    if (select.disabled) return;
+    $$(".multi-select.is-open").forEach((item) => {
+      if (item !== widget) {
+        item.classList.remove("is-open");
+        item.querySelector(".multi-select-control").setAttribute("aria-expanded", "false");
+      }
+    });
+    const open = !widget.classList.contains("is-open");
+    widget.classList.toggle("is-open", open);
+    widget.querySelector(".multi-select-control").setAttribute("aria-expanded", String(open));
+  });
+
+  widget.addEventListener("click", (event) => {
+    const tagRemove = event.target.closest(".multi-select-tag button");
+    if (tagRemove) {
+      event.stopPropagation();
+      const value = tagRemove.closest(".multi-select-tag").dataset.value;
+      const option = Array.from(select.options).find((item) => item.value === value);
+      if (option) option.selected = false;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      syncMultiSelect(select);
+      return;
+    }
+    const optionItem = event.target.closest(".multi-select-option");
+    if (!optionItem) return;
+    const option = Array.from(select.options).find((item) => item.value === optionItem.dataset.value);
+    if (!option) return;
+    option.selected = !option.selected;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    syncMultiSelect(select);
+  });
+
+  syncMultiSelect(select);
+}
+
+function enhanceAllMultiSelects() {
+  $$("select[multiple]").forEach(enhanceMultiSelect);
 }
 
 function userOptionsByRole(roleText) {
@@ -591,6 +673,7 @@ function renderProjectFormOptions() {
   $("#projectItSelect").innerHTML = userOptionsByRole("IT")
     .map((user) => `<option value="${user.name}">${user.name}</option>`)
     .join("");
+  enhanceAllMultiSelects();
 }
 
 function renderUserFormOptions() {
@@ -600,6 +683,7 @@ function renderUserFormOptions() {
   $("#userProductSelect").innerHTML = products
     .map((product) => `<option value="${product.name}">${product.name}</option>`)
     .join("");
+  enhanceAllMultiSelects();
 }
 
 function switchPage(page) {
@@ -807,11 +891,10 @@ function openUserModal(userId) {
     form.name.value = user.name;
     form.email.value = user.email;
     form.role.value = user.role;
-    Array.from(form.products.options).forEach((option) => {
-      option.selected = user.products.includes(option.value);
-    });
+    setSelectedValues(form.products, user.products);
     form.enabled.checked = user.enabled;
   }
+  syncMultiSelect(form.products);
   openModal("#userModal");
 }
 
@@ -881,12 +964,14 @@ function setProjectFormMode(canEdit) {
     control.disabled = !canEdit;
   });
   $$(".ai-panel[data-ai-panel='versionEditor']").forEach((panel) => panel.classList.toggle("is-hidden", !canEdit));
+  enhanceAllMultiSelects();
 }
 
 function openProjectForm(projectId) {
   const form = $("#projectForm");
   renderProjectFormOptions();
   form.reset();
+  enhanceAllMultiSelects();
   resetRequirementEditor();
   resetProjectEditTabs(Boolean(projectId));
   const canEdit = !projectId || hasPermission("專案新增編輯");
@@ -917,6 +1002,7 @@ function openProjectForm(projectId) {
     renderProjectItems(project.id);
   }
   setProjectFormMode(canEdit);
+  enhanceAllMultiSelects();
   switchPage("projectForm");
 }
 
@@ -925,6 +1011,7 @@ function renderProjectItemFormOptions(projectId = selectedProjectId) {
   $("#projectItemItSelect").innerHTML = splitAssignees(project.it)
     .map((name) => `<option value="${name}">${name}</option>`)
     .join("");
+  enhanceAllMultiSelects();
 }
 
 function renderItemMessages(messages = []) {
@@ -949,12 +1036,14 @@ function setProjectItemFormMode(canEdit) {
   $("#itemRequirementVisualEditor").contentEditable = String(canEdit);
   $("#itemRequirementAiPanel").classList.toggle("is-hidden", !canEdit);
   form.querySelector('button[type="submit"]').classList.toggle("is-hidden", !canEdit);
+  enhanceAllMultiSelects();
 }
 
 function openProjectItemForm(itemId) {
   const form = $("#projectItemForm");
   form.reset();
   renderProjectItemFormOptions(selectedProjectId);
+  enhanceAllMultiSelects();
   form.projectId.value = selectedProjectId;
   setVisualRequirementMarkdown("");
   renderItemMessages([]);
@@ -975,6 +1064,7 @@ function openProjectItemForm(itemId) {
     renderItemMessages(item.messages || []);
   }
   setProjectItemFormMode(hasPermission("專案新增編輯"));
+  enhanceAllMultiSelects();
   switchPage("itemForm");
 }
 
@@ -1120,7 +1210,19 @@ $("#sidebarBackdrop").addEventListener("click", () => setMobileMenu(false));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     setMobileMenu(false);
+    $$(".multi-select.is-open").forEach((item) => {
+      item.classList.remove("is-open");
+      item.querySelector(".multi-select-control").setAttribute("aria-expanded", "false");
+    });
   }
+});
+
+document.addEventListener("click", (event) => {
+  if (event.target.closest(".multi-select")) return;
+  $$(".multi-select.is-open").forEach((item) => {
+    item.classList.remove("is-open");
+    item.querySelector(".multi-select-control").setAttribute("aria-expanded", "false");
+  });
 });
 
 $("#projectRows").addEventListener("click", (event) => {
@@ -1462,3 +1564,4 @@ renderPermissions();
 renderUsers();
 renderUserFormOptions();
 renderProjectFormOptions();
+enhanceAllMultiSelects();
