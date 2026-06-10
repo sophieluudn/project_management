@@ -1157,6 +1157,10 @@ textarea {
   gap: 12px;
 }
 
+.form-field-wide {
+  grid-column: 1 / -1;
+}
+
 .page-form {
   display: grid;
   gap: 16px;

@@ -217,6 +217,20 @@ function enhanceMultiSelect(select) {
   `;
   select.insertAdjacentElement("afterend", widget);
 
+  const keepDropdownInModalView = () => {
+    window.requestAnimationFrame(() => {
+      const modal = widget.closest(".modal-card");
+      const dropdown = widget.querySelector(".multi-select-dropdown");
+      if (!modal || !dropdown || !widget.classList.contains("is-open")) return;
+      const modalRect = modal.getBoundingClientRect();
+      const dropdownRect = dropdown.getBoundingClientRect();
+      const overflow = dropdownRect.bottom - modalRect.bottom + 16;
+      if (overflow > 0) {
+        modal.scrollTop += overflow;
+      }
+    });
+  };
+
   widget.querySelector(".multi-select-control").addEventListener("click", () => {
     if (select.disabled) return;
     $$(".multi-select.is-open").forEach((item) => {
@@ -228,6 +242,7 @@ function enhanceMultiSelect(select) {
     const open = !widget.classList.contains("is-open");
     widget.classList.toggle("is-open", open);
     widget.querySelector(".multi-select-control").setAttribute("aria-expanded", String(open));
+    if (open) keepDropdownInModalView();
   });
 
   widget.addEventListener("click", (event) => {
@@ -248,6 +263,7 @@ function enhanceMultiSelect(select) {
     option.selected = !option.selected;
     select.dispatchEvent(new Event("change", { bubbles: true }));
     syncMultiSelect(select);
+    keepDropdownInModalView();
   });
 
   syncMultiSelect(select);
