@@ -108,10 +108,18 @@ let projectItems = [
 ];
 
 let products = [
-  { id: 1, name: "App 產品線", description: "會員、通知與 App 端核心流程管理。", enabled: true, note: "主要由 PM 團隊與 App IT 維護。" },
-  { id: 2, name: "營運後台", description: "營運報表、活動設定與內部作業工具。", enabled: true, note: "需控管報表下載權限。" },
-  { id: 3, name: "官網", description: "品牌官網、活動頁與公開內容管理。", enabled: true, note: "活動檔期前需提早排程。" },
-  { id: 4, name: "CRM", description: "客服工單、會員服務與客戶資料管理。", enabled: true, note: "涉及個資欄位需特別審核。" }
+  { id: 1, name: "App 產品線", type: "iOS", description: "會員、通知與 App 端核心流程管理。", enabled: true, note: "主要由 PM 團隊與 App IT 維護。" },
+  { id: 2, name: "營運後台", type: "平台", description: "營運報表、活動設定與內部作業工具。", enabled: true, note: "需控管報表下載權限。" },
+  { id: 3, name: "官網", type: "平台", description: "品牌官網、活動頁與公開內容管理。", enabled: true, note: "活動檔期前需提早排程。" },
+  { id: 4, name: "CRM", type: "Chatbot", description: "客服工單、會員服務與客戶資料管理。", enabled: true, note: "涉及個資欄位需特別審核。" }
+];
+
+let productTypes = [
+  { id: 1, name: "Android", enabled: true, note: "" },
+  { id: 2, name: "iOS", enabled: true, note: "" },
+  { id: 3, name: "平台", enabled: true, note: "" },
+  { id: 4, name: "Chatbot", enabled: true, note: "" },
+  { id: 5, name: "模組", enabled: true, note: "" }
 ];
 
 let roles = [
@@ -306,6 +314,10 @@ function projectVersion(project) {
   return project.version || `v1.${project.id}.0`;
 }
 
+function productTypeForProject(project) {
+  return products.find((product) => product.name === project.product)?.type || project.projectType || "平台";
+}
+
 function renderProjects() {
   const keyword = $("#projectSearch").value.trim().toLowerCase();
   const product = $("#productFilter").value;
@@ -318,7 +330,7 @@ function renderProjects() {
     .filter((project) => it === "all" || splitAssignees(project.it).includes(it))
     .filter((project) => status === "all" || project.status === status)
     .filter((project) => {
-      const haystack = `${project.version} ${project.projectType} ${project.product} ${project.pm} ${project.it}`.toLowerCase();
+      const haystack = `${project.version} ${productTypeForProject(project)} ${project.product} ${project.pm} ${project.it}`.toLowerCase();
       return haystack.includes(keyword);
     })
     .map((project) => {
@@ -326,7 +338,7 @@ function renderProjects() {
       return `
         <tr>
           <td>${project.product}</td>
-          <td>${project.projectType || "平台"}</td>
+          <td>${productTypeForProject(project)}</td>
           <td><button class="link-button" data-open-overview="${project.id}" type="button">${projectVersion(project)}</button></td>
           <td>${project.pm}</td>
           <td>${project.it}</td>
@@ -613,13 +625,29 @@ function renderTodoKanban() {
 
 function renderProducts() {
   $("#productRows").innerHTML = products.map((product) => `
-    <tr>
-      <td>${product.id}</td>
-      <td><button class="link-button" data-edit-product="${product.id}" type="button">${product.name}</button></td>
-      <td>${product.description || "<span class=\"muted\">未填寫</span>"}</td>
-      <td>
+      <tr>
+        <td>${product.id}</td>
+        <td><button class="link-button" data-edit-product="${product.id}" type="button">${product.name}</button></td>
+        <td>${product.type || "平台"}</td>
+        <td>${product.description || "<span class=\"muted\">未填寫</span>"}</td>
+        <td>
         <label class="switch" aria-label="${product.name} 啟用狀態">
           <input data-toggle-product="${product.id}" type="checkbox" ${product.enabled ? "checked" : ""} />
+          <span></span>
+        </label>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function renderProductTypes() {
+  $("#productTypeRows").innerHTML = productTypes.map((type) => `
+    <tr>
+      <td>${type.id}</td>
+      <td><button class="link-button" data-edit-product-type="${type.id}" type="button">${type.name}</button></td>
+      <td>
+        <label class="switch" aria-label="${type.name} 啟用狀態">
+          <input data-toggle-product-type="${type.id}" type="checkbox" ${type.enabled ? "checked" : ""} />
           <span></span>
         </label>
       </td>
@@ -692,14 +720,37 @@ function renderProjectFormOptions() {
   enhanceAllMultiSelects();
 }
 
+function renderProductTypeOptions(selectedType = "") {
+  const optionNames = uniqueList([
+    ...productTypes.filter((type) => type.enabled || type.name === selectedType).map((type) => type.name),
+    selectedType
+  ]);
+  $("#productTypeSelect").innerHTML = optionNames
+    .filter(Boolean)
+    .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join("");
+}
+
 function renderUserFormOptions() {
   $("#userRoleSelect").innerHTML = roles
     .map((role) => `<option value="${role.name}">${role.name}</option>`)
     .join("");
-  $("#userProductSelect").innerHTML = products
-    .map((product) => `<option value="${product.name}">${product.name}</option>`)
+  $("#userProductCheckboxes").innerHTML = products
+    .map((product) => `
+      <label>
+        <input type="checkbox" name="products" value="${escapeHtml(product.name)}" />
+        ${escapeHtml(product.name)}
+      </label>
+    `)
     .join("");
   enhanceAllMultiSelects();
+}
+
+function setUserProductChecks(values = []) {
+  const selected = Array.isArray(values) ? values : String(values || "").split("、").filter(Boolean);
+  $$("#userProductCheckboxes input[name='products']").forEach((input) => {
+    input.checked = selected.includes(input.value);
+  });
 }
 
 function switchPage(page) {
@@ -749,8 +800,8 @@ function seedNewProject(form) {
   const payload = {
     version,
     name: version,
-    projectType: data.get("projectType"),
     product: data.get("product"),
+    projectType: products.find((product) => product.name === data.get("product"))?.type || "平台",
     pm: selectedValues(form.pm).join("、"),
     it: selectedValues(form.it).join("、"),
     status: data.get("status"),
@@ -814,13 +865,16 @@ function openProductModal(productId) {
   const form = $("#productForm");
   form.reset();
   form.enabled.checked = true;
+  renderProductTypeOptions();
   $("#productModalTitle").textContent = "新增產品";
   if (productId) {
     const product = products.find((item) => item.id === Number(productId));
     if (!product) return;
     $("#productModalTitle").textContent = "編輯產品";
+    renderProductTypeOptions(product.type || "平台");
     form.id.value = product.id;
     form.name.value = product.name;
+    form.type.value = product.type || "平台";
     form.description.value = product.description;
     form.note.value = product.note;
     form.enabled.checked = product.enabled;
@@ -833,6 +887,7 @@ function saveProduct(form) {
   const id = Number(data.get("id"));
   const payload = {
     name: data.get("name").trim(),
+    type: data.get("type"),
     description: data.get("description").trim(),
     note: data.get("note").trim(),
     enabled: form.enabled.checked
@@ -843,6 +898,44 @@ function saveProduct(form) {
   } else {
     const nextId = Math.max(0, ...products.map((product) => product.id)) + 1;
     products.push({ id: nextId, ...payload });
+  }
+}
+
+function openProductTypeModal(typeId) {
+  const form = $("#productTypeForm");
+  form.reset();
+  form.enabled.checked = true;
+  $("#productTypeModalTitle").textContent = "新增類型";
+  if (typeId) {
+    const type = productTypes.find((item) => item.id === Number(typeId));
+    if (!type) return;
+    $("#productTypeModalTitle").textContent = "編輯類型";
+    form.id.value = type.id;
+    form.name.value = type.name;
+    form.note.value = type.note || "";
+    form.enabled.checked = type.enabled;
+  }
+  openModal("#productTypeModal");
+}
+
+function saveProductType(form) {
+  const data = new FormData(form);
+  const id = Number(data.get("id"));
+  const payload = {
+    name: data.get("name").trim(),
+    note: data.get("note").trim(),
+    enabled: form.enabled.checked
+  };
+  if (id) {
+    const type = productTypes.find((item) => item.id === id);
+    const oldName = type.name;
+    Object.assign(type, payload);
+    products.forEach((product) => {
+      if (product.type === oldName) product.type = payload.name;
+    });
+  } else {
+    const nextId = Math.max(0, ...productTypes.map((type) => type.id)) + 1;
+    productTypes.push({ id: nextId, ...payload });
   }
 }
 
@@ -907,10 +1000,9 @@ function openUserModal(userId) {
     form.name.value = user.name;
     form.email.value = user.email;
     form.role.value = user.role;
-    setSelectedValues(form.products, user.products);
+    setUserProductChecks(user.products);
     form.enabled.checked = user.enabled;
   }
-  syncMultiSelect(form.products);
   openModal("#userModal");
 }
 
@@ -997,7 +1089,6 @@ function openProjectForm(projectId) {
     selectedProjectId = project.id;
     form.id.value = project.id;
     form.version.value = projectVersion(project);
-    form.projectType.value = project.projectType || "平台";
     form.product.value = project.product;
     setSelectedValues(form.pm, project.pm);
     setSelectedValues(form.it, project.it);
@@ -1271,6 +1362,7 @@ $("#newProjectItemButton").addEventListener("click", () => openProjectItemForm()
 $("#quickBugButton").addEventListener("click", () => openModal("#bugModal"));
 $("#newTodoButton").addEventListener("click", () => openModal("#bugModal"));
 $("#newProductButton").addEventListener("click", () => openProductModal());
+$("#newProductTypeButton").addEventListener("click", () => openProductTypeModal());
 $("#newRoleButton").addEventListener("click", () => openRoleModal());
 $("#newUserButton").addEventListener("click", () => openUserModal());
 
@@ -1292,6 +1384,13 @@ $("#projectEditTabs").addEventListener("click", (event) => {
   if (!button) return;
   $$("#projectEditTabs .tab").forEach((tab) => tab.classList.toggle("is-active", tab === button));
   $$(".project-edit-panel").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.projectEditPanel === button.dataset.projectEditTab));
+});
+
+$("#productTabs").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-product-tab]");
+  if (!button) return;
+  $$("#productTabs .tab").forEach((tab) => tab.classList.toggle("is-active", tab === button));
+  $$(".product-tab-panel").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.productTabPanel === button.dataset.productTab));
 });
 
 $("#projectItemRows").addEventListener("click", (event) => {
@@ -1465,6 +1564,14 @@ document.body.addEventListener("change", (event) => {
     renderRoles();
     return;
   }
+  const productTypeSwitch = event.target.closest("[data-toggle-product-type]");
+  if (productTypeSwitch) {
+    const type = productTypes.find((item) => item.id === Number(productTypeSwitch.dataset.toggleProductType));
+    if (type) type.enabled = productTypeSwitch.checked;
+    renderProductTypes();
+    renderProductTypeOptions();
+    return;
+  }
   const userSwitch = event.target.closest("[data-toggle-user]");
   if (userSwitch) {
     const user = users.find((item) => item.id === Number(userSwitch.dataset.toggleUser));
@@ -1488,6 +1595,13 @@ $("#productRows").addEventListener("click", (event) => {
   const editButton = event.target.closest("[data-edit-product]");
   if (editButton) {
     openProductModal(editButton.dataset.editProduct);
+  }
+});
+
+$("#productTypeRows").addEventListener("click", (event) => {
+  const editButton = event.target.closest("[data-edit-product-type]");
+  if (editButton) {
+    openProductTypeModal(editButton.dataset.editProductType);
   }
 });
 
@@ -1546,8 +1660,19 @@ $("#productForm").addEventListener("submit", (event) => {
   event.preventDefault();
   saveProduct(event.currentTarget);
   renderProducts();
+  renderProductTypes();
   renderUserFormOptions();
   renderProjectFormOptions();
+  renderProjectFilters();
+  closeModals();
+});
+
+$("#productTypeForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveProductType(event.currentTarget);
+  renderProductTypes();
+  renderProducts();
+  renderProductTypeOptions();
   renderProjectFilters();
   closeModals();
 });
@@ -1575,6 +1700,7 @@ renderDashboard();
 renderDetail(selectedProjectId);
 renderTodoKanban();
 renderProducts();
+renderProductTypes();
 renderRoles();
 renderPermissions();
 renderUsers();

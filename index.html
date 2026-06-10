@@ -280,9 +280,8 @@
                   <h3 id="projectFormTitle">新增專案</h3>
                 </div>
                 <div class="form-grid">
-                  <label>版號<input name="version" required placeholder="例：v1.4.0" /></label>
-                  <label>類型<select name="projectType" required><option>Android</option><option>iOS</option><option>平台</option><option>模組</option></select></label>
                   <label>產品<select name="product" id="projectProductSelect" required></select></label>
+                  <label>版號<input name="version" required placeholder="例：v1.4.0" /></label>
                   <label>PM<select name="pm" id="projectPmSelect" multiple required></select></label>
                   <label>IT<select name="it" id="projectItSelect" multiple required></select></label>
                   <label>專案狀態<select name="status"><option>需求確認中</option><option>開發中</option><option>測試中</option><option>待上線</option><option>已上線</option><option>暫停</option></select></label>
@@ -491,21 +490,45 @@
           </section>
 
           <section class="page" data-page-panel="products">
-            <div class="toolbar right">
-              <button class="primary-button" id="newProductButton" type="button">＋ 新增產品</button>
+            <div class="tabs" id="productTabs" role="tablist">
+              <button class="tab is-active" data-product-tab="products" type="button">產品列表</button>
+              <button class="tab" data-product-tab="types" type="button">類型列表</button>
             </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>產品名稱</th>
-                    <th>說明</th>
-                    <th>啟用狀態</th>
-                  </tr>
-                </thead>
-                <tbody id="productRows"></tbody>
-              </table>
+            <div class="product-tab-panel is-active" data-product-tab-panel="products">
+              <div class="toolbar right">
+                <button class="primary-button" id="newProductButton" type="button">＋ 新增產品</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>產品名稱</th>
+                      <th>類型</th>
+                      <th>說明</th>
+                      <th>狀態</th>
+                    </tr>
+                  </thead>
+                  <tbody id="productRows"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="product-tab-panel" data-product-tab-panel="types">
+              <div class="toolbar right">
+                <button class="primary-button" id="newProductTypeButton" type="button">＋ 新增類型</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>名稱</th>
+                      <th>狀態</th>
+                    </tr>
+                  </thead>
+                  <tbody id="productTypeRows"></tbody>
+                </table>
+              </div>
             </div>
           </section>
 
@@ -622,7 +645,36 @@
         </div>
         <div class="form-grid single">
           <label>產品名稱<input name="name" required placeholder="例：App 產品線" /></label>
+          <label>類型<select name="type" id="productTypeSelect" required></select></label>
           <label>說明<textarea name="description" placeholder="輸入產品用途或管理範圍"></textarea></label>
+          <label>備註<textarea name="note" placeholder="補充內部注意事項"></textarea></label>
+        </div>
+        <div class="modal-actions">
+          <button class="ghost-button close-modal" type="button">取消</button>
+          <button class="primary-button" type="submit">儲存</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-backdrop is-hidden" id="productTypeModal" role="dialog" aria-modal="true" aria-labelledby="productTypeModalTitle">
+      <form class="modal-card" id="productTypeForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">類型設定</p>
+            <h3 id="productTypeModalTitle">新增類型</h3>
+          </div>
+          <button class="icon-button close-modal" type="button" aria-label="關閉">×</button>
+        </div>
+        <input type="hidden" name="id" />
+        <div class="switch-row">
+          <span>啟用狀態</span>
+          <label class="switch">
+            <input name="enabled" type="checkbox" checked />
+            <span></span>
+          </label>
+        </div>
+        <div class="form-grid single">
+          <label>名稱<input name="name" required placeholder="例：Android" /></label>
           <label>備註<textarea name="note" placeholder="補充內部注意事項"></textarea></label>
         </div>
         <div class="modal-actions">
@@ -691,7 +743,10 @@
           <label>使用者名稱<input name="name" required placeholder="例：Sophie Lu" /></label>
           <label>角色<select name="role" id="userRoleSelect" required></select></label>
           <label class="form-field-wide">使用者 Email<input name="email" type="email" required placeholder="例：sophie@example.com" /></label>
-          <label class="form-field-wide">負責產品<select name="products" id="userProductSelect" multiple required></select></label>
+          <div class="form-field-wide checkbox-field">
+            <span>負責產品</span>
+            <div class="checkbox-list" id="userProductCheckboxes"></div>
+          </div>
         </div>
         <div class="modal-actions">
           <button class="ghost-button close-modal" type="button">取消</button>
