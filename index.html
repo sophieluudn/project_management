@@ -284,7 +284,7 @@
                   <label>版號<input name="version" required placeholder="例：v1.4.0" /></label>
                   <label>PM<select name="pm" id="projectPmSelect" multiple required></select></label>
                   <label>IT<select name="it" id="projectItSelect" multiple required></select></label>
-                  <label>專案狀態<select name="status"><option>需求確認中</option><option>開發中</option><option>測試中</option><option>待上線</option><option>已上線</option><option>暫停</option></select></label>
+                  <label>專案狀態<select name="status" id="projectStatusSelect"></select></label>
                   <label>優先級<select name="priority"><option>高</option><option>中</option><option>低</option></select></label>
                 </div>
               </div>
@@ -416,7 +416,7 @@
                   <label>項目名稱<input name="name" required placeholder="例：會員資料維護流程" /></label>
                   <label>IT<select name="it" id="projectItemItSelect" multiple required></select></label>
                   <label>優先級<select name="priority"><option>高</option><option>中</option><option>低</option></select></label>
-                  <label>進度<select name="progress"><option>待處理</option><option>開發中</option><option>測試中</option><option>已修復</option><option>已完成</option></select></label>
+                  <label>進度<select name="progress" id="projectItemProgressSelect"></select></label>
                 </div>
               </div>
               <div class="item-workspace-layout">
@@ -492,7 +492,7 @@
           <section class="page" data-page-panel="products">
             <div class="tabs" id="productTabs" role="tablist">
               <button class="tab is-active" data-product-tab="products" type="button">產品列表</button>
-              <button class="tab" data-product-tab="types" type="button">類型列表</button>
+              <button class="tab" data-product-tab="types" type="button">選項列表</button>
             </div>
             <div class="product-tab-panel is-active" data-product-tab-panel="products">
               <div class="toolbar right">
@@ -515,7 +515,7 @@
             </div>
             <div class="product-tab-panel" data-product-tab-panel="types">
               <div class="toolbar right">
-                <button class="primary-button" id="newProductTypeButton" type="button">＋ 新增類型</button>
+                <button class="primary-button" id="newProductTypeButton" type="button">＋ 新增選項</button>
               </div>
               <div class="table-wrap">
                 <table>
@@ -523,6 +523,7 @@
                     <tr>
                       <th>ID</th>
                       <th>名稱</th>
+                      <th>選項</th>
                       <th>狀態</th>
                     </tr>
                   </thead>
@@ -660,8 +661,8 @@
       <form class="modal-card" id="productTypeForm">
         <div class="modal-header">
           <div>
-            <p class="eyebrow">類型設定</p>
-            <h3 id="productTypeModalTitle">新增類型</h3>
+            <p class="eyebrow">選項設定</p>
+            <h3 id="productTypeModalTitle">新增選項</h3>
           </div>
           <button class="icon-button close-modal" type="button" aria-label="關閉">×</button>
         </div>
@@ -675,6 +676,7 @@
         </div>
         <div class="form-grid single">
           <label>名稱<input name="name" required placeholder="例：Android" /></label>
+          <label>選項<select name="option" required><option>類型</option><option>進度</option></select></label>
           <label>備註<textarea name="note" placeholder="補充內部注意事項"></textarea></label>
         </div>
         <div class="modal-actions">

@@ -115,11 +115,20 @@ let products = [
 ];
 
 let productTypes = [
-  { id: 1, name: "Android", enabled: true, note: "" },
-  { id: 2, name: "iOS", enabled: true, note: "" },
-  { id: 3, name: "平台", enabled: true, note: "" },
-  { id: 4, name: "Chatbot", enabled: true, note: "" },
-  { id: 5, name: "模組", enabled: true, note: "" }
+  { id: 1, name: "Android", option: "類型", enabled: true, note: "" },
+  { id: 2, name: "iOS", option: "類型", enabled: true, note: "" },
+  { id: 3, name: "平台", option: "類型", enabled: true, note: "" },
+  { id: 4, name: "Chatbot", option: "類型", enabled: true, note: "" },
+  { id: 5, name: "模組", option: "類型", enabled: true, note: "" },
+  { id: 6, name: "需求確認中", option: "進度", enabled: true, note: "" },
+  { id: 7, name: "開發中", option: "進度", enabled: true, note: "" },
+  { id: 8, name: "測試中", option: "進度", enabled: true, note: "" },
+  { id: 9, name: "待上線", option: "進度", enabled: true, note: "" },
+  { id: 10, name: "已上線", option: "進度", enabled: true, note: "" },
+  { id: 11, name: "暫停", option: "進度", enabled: true, note: "" },
+  { id: 12, name: "待處理", option: "進度", enabled: true, note: "" },
+  { id: 13, name: "已修復", option: "進度", enabled: true, note: "" },
+  { id: 14, name: "已完成", option: "進度", enabled: true, note: "" }
 ];
 
 let roles = [
@@ -318,6 +327,13 @@ function productTypeForProject(project) {
   return products.find((product) => product.name === project.product)?.type || project.projectType || "平台";
 }
 
+function optionNamesByKind(kind, selectedName = "") {
+  return uniqueList([
+    ...productTypes.filter((item) => item.option === kind && (item.enabled || item.name === selectedName)).map((item) => item.name),
+    selectedName
+  ]).filter(Boolean);
+}
+
 function renderProjects() {
   const keyword = $("#projectSearch").value.trim().toLowerCase();
   const product = $("#productFilter").value;
@@ -367,6 +383,7 @@ function renderProjectFilters() {
   $("#productFilter").innerHTML = `<option value="all">全部產品</option>${productOptions.map((item) => `<option value="${item}">${item}</option>`).join("")}`;
   $("#pmFilter").innerHTML = `<option value="all">全部 PM</option>${pmOptions.map((item) => `<option value="${item}">${item}</option>`).join("")}`;
   $("#itFilter").innerHTML = `<option value="all">全部 IT</option>${itOptions.map((item) => `<option value="${item}">${item}</option>`).join("")}`;
+  $("#statusFilter").innerHTML = `<option value="all">全部狀態</option>${optionNamesByKind("進度").map((item) => `<option value="${item}">${item}</option>`).join("")}`;
 }
 
 function renderDashboard() {
@@ -645,6 +662,7 @@ function renderProductTypes() {
     <tr>
       <td>${type.id}</td>
       <td><button class="link-button" data-edit-product-type="${type.id}" type="button">${type.name}</button></td>
+      <td>${type.option || "類型"}</td>
       <td>
         <label class="switch" aria-label="${type.name} 啟用狀態">
           <input data-toggle-product-type="${type.id}" type="checkbox" ${type.enabled ? "checked" : ""} />
@@ -706,7 +724,7 @@ function renderBugProjectOptions() {
     .join("");
 }
 
-function renderProjectFormOptions() {
+function renderProjectFormOptions(selectedStatus = "") {
   $("#projectProductSelect").innerHTML = products
     .filter((product) => product.enabled)
     .map((product) => `<option value="${product.name}">${product.name}</option>`)
@@ -717,16 +735,20 @@ function renderProjectFormOptions() {
   $("#projectItSelect").innerHTML = userOptionsByRole("IT")
     .map((user) => `<option value="${user.name}">${user.name}</option>`)
     .join("");
+  $("#projectStatusSelect").innerHTML = optionNamesByKind("進度", selectedStatus)
+    .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join("");
   enhanceAllMultiSelects();
 }
 
 function renderProductTypeOptions(selectedType = "") {
-  const optionNames = uniqueList([
-    ...productTypes.filter((type) => type.enabled || type.name === selectedType).map((type) => type.name),
-    selectedType
-  ]);
-  $("#productTypeSelect").innerHTML = optionNames
-    .filter(Boolean)
+  $("#productTypeSelect").innerHTML = optionNamesByKind("類型", selectedType)
+    .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join("");
+}
+
+function renderProjectProgressOptions(selectedProgress = "") {
+  $("#projectItemProgressSelect").innerHTML = optionNamesByKind("進度", selectedProgress)
     .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
     .join("");
 }
@@ -905,13 +927,14 @@ function openProductTypeModal(typeId) {
   const form = $("#productTypeForm");
   form.reset();
   form.enabled.checked = true;
-  $("#productTypeModalTitle").textContent = "新增類型";
+  $("#productTypeModalTitle").textContent = "新增選項";
   if (typeId) {
     const type = productTypes.find((item) => item.id === Number(typeId));
     if (!type) return;
-    $("#productTypeModalTitle").textContent = "編輯類型";
+    $("#productTypeModalTitle").textContent = "編輯選項";
     form.id.value = type.id;
     form.name.value = type.name;
+    form.option.value = type.option || "類型";
     form.note.value = type.note || "";
     form.enabled.checked = type.enabled;
   }
@@ -923,16 +946,28 @@ function saveProductType(form) {
   const id = Number(data.get("id"));
   const payload = {
     name: data.get("name").trim(),
+    option: data.get("option"),
     note: data.get("note").trim(),
     enabled: form.enabled.checked
   };
   if (id) {
     const type = productTypes.find((item) => item.id === id);
     const oldName = type.name;
+    const oldOption = type.option || "類型";
     Object.assign(type, payload);
-    products.forEach((product) => {
-      if (product.type === oldName) product.type = payload.name;
-    });
+    if (oldOption === "類型") {
+      products.forEach((product) => {
+        if (product.type === oldName) product.type = payload.name;
+      });
+    }
+    if (oldOption === "進度") {
+      projects.forEach((project) => {
+        if (project.status === oldName) project.status = payload.name;
+      });
+      projectItems.forEach((item) => {
+        if (item.progress === oldName) item.progress = payload.name;
+      });
+    }
   } else {
     const nextId = Math.max(0, ...productTypes.map((type) => type.id)) + 1;
     productTypes.push({ id: nextId, ...payload });
@@ -1086,6 +1121,7 @@ function openProjectForm(projectId) {
   $("#projectFormTitle").textContent = projectId ? "專案總覽" : "新增專案";
   if (projectId) {
     const project = getProject(projectId);
+    renderProjectFormOptions(project.status);
     selectedProjectId = project.id;
     form.id.value = project.id;
     form.version.value = projectVersion(project);
@@ -1113,11 +1149,12 @@ function openProjectForm(projectId) {
   switchPage("projectForm");
 }
 
-function renderProjectItemFormOptions(projectId = selectedProjectId) {
+function renderProjectItemFormOptions(projectId = selectedProjectId, selectedProgress = "") {
   const project = getProject(projectId);
   $("#projectItemItSelect").innerHTML = splitAssignees(project.it)
     .map((name) => `<option value="${name}">${name}</option>`)
     .join("");
+  renderProjectProgressOptions(selectedProgress);
   enhanceAllMultiSelects();
 }
 
@@ -1160,7 +1197,7 @@ function openProjectItemForm(itemId) {
     const item = projectItems.find((entry) => entry.id === Number(itemId));
     if (!item) return;
     selectedProjectId = item.projectId;
-    renderProjectItemFormOptions(item.projectId);
+        renderProjectItemFormOptions(item.projectId, item.progress);
     form.id.value = item.id;
     form.projectId.value = item.projectId;
     form.name.value = item.name;
@@ -1570,6 +1607,8 @@ document.body.addEventListener("change", (event) => {
     if (type) type.enabled = productTypeSwitch.checked;
     renderProductTypes();
     renderProductTypeOptions();
+    renderProjectFilters();
+    renderProjectFormOptions();
     return;
   }
   const userSwitch = event.target.closest("[data-toggle-user]");
@@ -1672,8 +1711,11 @@ $("#productTypeForm").addEventListener("submit", (event) => {
   saveProductType(event.currentTarget);
   renderProductTypes();
   renderProducts();
+  renderProjects();
+  renderDashboard();
   renderProductTypeOptions();
   renderProjectFilters();
+  renderProjectFormOptions();
   closeModals();
 });
 
