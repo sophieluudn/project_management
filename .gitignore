@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.pnpm-store/
+
+*.log
+*.tsbuildinfo
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.env
+.env.*
+!.env.example
